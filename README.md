@@ -1,8 +1,12 @@
 ![image](https://github.com/user-attachments/assets/5aa36739-76c8-4a34-9a9b-7e9272927f22)
 
-# MechvibesDX
+# MechVibes Super Lite
 
-Play rich keyboard and mouse sounds with every keystroke and click. A polyphonic, low-latency mechanical keyboard sound simulator for Windows, macOS, and Linux. Successor of Mechvibes, now with resample-on-load audio, dedicated audio engine thread, and one-click verified updates.
+[![Latest release](https://img.shields.io/github/v/release/namecode51x/mechivibes-lite?sort=semver)](https://github.com/namecode51x/mechivibes-lite/releases/latest)
+[![CI](https://github.com/namecode51x/mechivibes-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/namecode51x/mechivibes-lite/actions/workflows/ci.yml)
+[![Download Windows setup](https://img.shields.io/badge/download-Windows_setup-2f6f4e?logo=windows)](https://github.com/namecode51x/mechivibes-lite/releases/latest)
+
+Play rich keyboard and mouse sounds with every keystroke and click. A polyphonic, low-latency mechanical keyboard sound simulator for Windows, macOS, and Linux - a leaner fork of MechvibesDX, now with resample-on-load audio, a dedicated audio engine thread, one-click verified updates, and nothing running at all while you are idle.
 
 ## Download
 
@@ -23,7 +27,7 @@ All links point to the [latest release](https://github.com/namecode51x/mechivibe
 - **Runtime output device switching**: Change audio output (headphones, speakers, virtual devices) in Settings without restarting.
 - **Soundpack support**: Import or create custom soundpacks. Drag and drop folders into the app. Supports OGG, WAV, MP3, FLAC. Auto-converts classic Mechvibes packs (V1) to V2 format.
 - **Ambiance sounds**: Long-playing background audio (rain, coffee shop) that moves with your selected output device.
-- **Themes and customization**: Light/dark themes, custom logo, background images.
+- **Themes and customization**: two house finishes - dark `SuperLite` and white-with-black `Papel` - plus the full daisyUI set and custom themes, custom logo, background images.
 - **Tray icon and global hotkey**: `Ctrl+Alt+M` to mute/unmute. Tray icon shows mute state at a glance.
 - **One-click verified updates** (Windows): When new versions are available, download and install with SHA-256 verification. Choose "Later" to defer, but the verified file stays ready.
 - **Settings save correctly**: Writable state lives in `%APPDATA%\Mechvibes` (Windows), `~/.local/share/mechvibes` (Linux), or `~/Library/Application Support/Mechvibes` (macOS). Settings persist across restarts, reinstalls, and updates.
