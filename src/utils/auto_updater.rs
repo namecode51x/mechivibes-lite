@@ -1130,7 +1130,11 @@ mod tests {
         // The whole point of the check, and the one branch no offline test
         // reached while the decision lived inside the HTTP call: parse the
         // payload, pick the latest non-prerelease, compare versions, pick this
-        // platform's asset, report an upgrade.
+        // platform's asset, report an upgrade. What "this platform's asset"
+        // means is decided at runtime by `current_install_kind()`, so the
+        // expectation has to be its choice too: asserting the Windows installer
+        // by name made this the one test in the module red on ubuntu and
+        // macOS, where the very same fixture offers a `.deb` and a `.dmg`.
         let releases = vec![release("v0.7.0", false, release_assets())];
 
         let info = updater_running("0.6.9")
@@ -1140,8 +1144,16 @@ mod tests {
         assert!(info.update_available, "0.6.9 must be told about 0.7.0");
         assert_eq!(info.current_version, "0.6.9");
         assert_eq!(info.latest_version, "0.7.0");
-        let url = info.download_url.expect("Windows must be offered the installer");
-        assert!(url.ends_with("MechvibesDX-0.7.0-Setup-x64.exe"), "got {url}");
+        let expected = match current_install_kind() {
+            InstallKind::Windows => "MechvibesDX-0.7.0-Setup-x64.exe",
+            InstallKind::MacOs => "mechvibes-dx-0.7.0-macos-arm64.dmg",
+            InstallKind::LinuxAppImage => "mechvibes-dx-0.7.0-x86_64.AppImage",
+            InstallKind::LinuxPackage => "mechvibes-dx_0.7.0_amd64.deb"
+        };
+        let url = info
+            .download_url
+            .expect("this platform must be offered an asset it can install");
+        assert!(url.ends_with(expected), "got {url}, expected ...{expected}");
     }
 
     #[test]
