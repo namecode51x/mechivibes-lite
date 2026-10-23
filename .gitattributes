@@ -1,0 +1,19 @@
+# Shell entry points are executed by bash: the git hooks (.githooks/*) and the
+# CI scripts. This repository checks out with core.autocrlf=true, which would
+# hand those files CRLF and make bash fail on the shebang line with
+# `$'\r': command not found` - the failure mode where the pre-commit gate
+# silently stops being a gate. Attributes outrank autocrlf, so these stay LF
+# on every checkout, on every platform.
+.githooks/* text eol=lf
+*.sh        text eol=lf
+
+# Media and fonts are bytes, not text: never line-ending mangled in either
+# direction, whatever core.autocrlf is set to.
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.ttf binary
+*.jpg binary
+*.png binary
+*.ico binary
+*.exe binary

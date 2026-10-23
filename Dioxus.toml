@@ -1,0 +1,42 @@
+[application]
+name = "mechvibes-dx"
+out_dir = "bundle"
+asset_dir = "assets"
+
+[application.desktop]
+bundle_assets = true
+
+[bundle]
+identifier = "com.hainguyents13.mechvibesdx"
+name = "MechvibesDX"
+version = "0.4.0"
+publisher = "Hai Nguyen"
+icon = ["./assets/icon.ico"]
+category = "Productivity"
+short_description = "MechvibesDX"
+long_description = "MechvibesDX is a modern, cross-platform interactive sound simulator for keyboard, mouse, and other input devices."
+resources = [
+  "./soundpacks/keyboard",
+  "./soundpacks/mouse",
+  "./soundpacks/keyboard/cherrymx-black-abs",
+  "./soundpacks/keyboard/cherrymx-black-pbt",
+  "./soundpacks/keyboard/cherrymx-blue-abs",
+  "./soundpacks/keyboard/cherrymx-blue-pbt",
+  "./soundpacks/keyboard/cherrymx-brown-abs",
+  "./soundpacks/keyboard/cherrymx-brown-pbt",
+  "./soundpacks/keyboard/cherrymx-red-abs",
+  "./soundpacks/keyboard/eg-crystal-purple",
+  "./soundpacks/keyboard/eg-oreo",
+  "./soundpacks/keyboard/topre-purple-hybrid-pbt",
+  "./soundpacks/mouse/chat",
+  "./soundpacks/mouse/ping",
+  "./soundpacks/mouse/vibrate",
+  "./soundpacks/mouse/wooden",
+  "./assets",
+]
+
+[bundle.windows]
+icon_path = "./assets/icon.ico"
+webview_install_mode = "Skip"
+tsp = false
+allow_downgrades = true

@@ -1,0 +1,153 @@
+name: Announce release
+
+# Fires AUTOMATICALLY when a release is PUBLISHED - not when the CI creates
+# the draft. Publishing is the human approval step, so the announcement can
+# never get ahead of a build the maintainer hasn't signed off on. Verified
+# live with v0.7.0: clicking Publish posted on its own, even though the
+# draft was created by ci.yml with GITHUB_TOKEN (GitHub's anti-recursion
+# rule only suppresses events *performed by* that token, and Publish is
+# performed by the human).
+on:
+  release:
+    types: [published]
+  # Manual runs are for the exceptional cases only - a normal release needs
+  # nothing beyond clicking Publish. No tag and no message = TEST MODE
+  # (ping-free labelled test). With a tag = re-announce that already-published
+  # release (recovery). With a message = post it verbatim. CAUTION: publishing
+  # already auto-posts, so a manual run about the same release makes a SECOND
+  # message (this bit us on v0.7.0 - one had to be deleted by hand).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Published release tag to announce for real (e.g. v0.6.3). Leave empty for a ping-free test message."
+        required: false
+        type: string
+      # For hand-written announcements (e.g. a multi-release recap). Posted
+      # VERBATIM - include your own greeting and links, nothing is added
+      # around it. Write <@&ROLE_ID> to ping the release role, or @everyone
+      # for the rare message the whole server must see. Takes precedence
+      # over `tag`.
+      message:
+        description: "Custom message to post verbatim (real ping). Overrides tag/notes formatting."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  discord:
+    name: Post to Discord
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send release embed
+        env:
+          # One-time setup: Discord channel -> Integrations -> Webhooks ->
+          # New Webhook -> copy URL, then `gh secret set DISCORD_RELEASE_WEBHOOK`.
+          # A webhook URL is all this needs - no bot, no bot token.
+          WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
+          # The opt-in "Release Updates" role that releases ping, instead of
+          # @everyone. Members pick it under Channels & Roles. Not a secret:
+          # `gh variable set DISCORD_RELEASE_ROLE_ID`. Unset = no ping at all.
+          ROLE_ID: ${{ vars.DISCORD_RELEASE_ROLE_ID }}
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          DISPATCH_TAG: ${{ inputs.tag }}
+          # Env-passed like RELEASE_BODY: quotes/newlines/markdown must never
+          # be interpolated into the script text itself.
+          DISPATCH_MESSAGE: ${{ inputs.message }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          # Passed via env on purpose: release notes contain quotes/newlines/
+          # markdown, and interpolating ${{ }} straight into the script would
+          # be a shell-injection hazard. jq below handles all escaping.
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          set -euo pipefail
+          if [ -z "$WEBHOOK" ]; then
+            echo "::notice::DISCORD_RELEASE_WEBHOOK secret not set - skipping announcement"
+            exit 0
+          fi
+
+          # Verbatim mode: the author owns the whole message, so no head/foot
+          # is added and no truncation is applied - over-limit is an error the
+          # author must fix, not something to silently cut.
+          if [ "$IS_DISPATCH" = "true" ] && [ -n "$DISPATCH_MESSAGE" ]; then
+            if [ "$(printf %s "$DISPATCH_MESSAGE" | wc -m)" -gt 2000 ]; then
+              echo "::error::Custom message exceeds Discord's 2000-character cap"
+              exit 1
+            fi
+            payload=$(jq -n --arg msg "$DISPATCH_MESSAGE" --arg role "$ROLE_ID" \
+              '{content: $msg, allowed_mentions: {parse: ["everyone"], roles: (if $role == "" then [] else [$role] end)}}')
+            curl -fsS -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
+            echo "Posted custom announcement to Discord"
+            exit 0
+          fi
+
+          IS_TEST=false
+          if [ "$IS_DISPATCH" = "true" ]; then
+            if [ -n "$DISPATCH_TAG" ]; then
+              # Real announcement for an already-published release. Refuses
+              # drafts so a manual typo can never leak an unreviewed build.
+              release_json=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${DISPATCH_TAG}")
+              if [ "$(echo "$release_json" | jq -r '.draft')" = "true" ]; then
+                echo "::error::Release ${DISPATCH_TAG} is still a draft - publish it first"
+                exit 1
+              fi
+              RELEASE_NAME=$(echo "$release_json" | jq -r '.name')
+              RELEASE_URL=$(echo "$release_json" | jq -r '.html_url')
+              RELEASE_BODY=$(echo "$release_json" | jq -r '.body')
+            else
+              IS_TEST=true
+              RELEASE_NAME="v0.0.0-test"
+              RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases"
+              RELEASE_BODY=$'### Fixed\n\n- **This is a test announcement** fired manually from GitHub Actions — please ignore.\n- Verifies the webhook, formatting, and truncation without pinging anyone.'
+            fi
+          fi
+
+          # A full changelog reads well on GitHub but overflows Discord's
+          # 2000-char cap, and a mid-sentence cut looks broken (it happened
+          # to v0.8.0). Compress to one line per change: each bullet keeps
+          # only its bold lead, or its first sentence when it has none.
+          # Headings, the "For developers" section (always last, not news for
+          # users) and the appended Downloads section are dropped - the
+          # footer links to the full notes.
+          RELEASE_BODY=$(printf '%s\n' "$RELEASE_BODY" | awk '
+            /^### (For developers|Downloads)/ { exit }
+            /^- / {
+              line = $0
+              if (match(line, /\*\*[^*]+\*\*/)) {
+                print "- " substr(line, RSTART+2, RLENGTH-4)
+              } else {
+                sub(/^- /, "", line)
+                n = index(line, ". ")
+                if (n == 0) { print "- " line } else { print "- " substr(line, 1, n) }
+              }
+            }')
+
+          # Plain message in the Mantine-announcement style (greeting +
+          # what's new + links), not an embed. Discord caps `content` at
+          # 2000 chars, so the digest is still trimmed as a last resort to
+          # leave room for the greeting and the links footer, which must
+          # always survive.
+          payload=$(jq -n \
+            --arg name "$RELEASE_NAME" \
+            --arg url "$RELEASE_URL" \
+            --arg body "$RELEASE_BODY" \
+            --arg role "$ROLE_ID" \
+            --argjson test "$IS_TEST" \
+            '
+            (if $role == "" then "everyone" else "<@&\($role)>" end) as $who |
+            ("Hi \($who), MechvibesDX \($name) is out! 🎉\n\nHere is what’s new:\n\n") as $head |
+            ("\n\n**Download & full changelog:**\n- GitHub release – \($url)\n- Or just open the app and click *Download & install* (Settings → Updates)") as $foot |
+            (2000 - ($head | length) - ($foot | length) - 10) as $room |
+            {
+              content: ($head + (if ($body | length) > $room then ($body | .[:$room]) + "\n…" else $body end) + $foot),
+              # Only the release role can be pinged, never @everyone. Test
+              # runs suppress ALL pings - the role renders but nobody gets
+              # notified. Real releases ping the role for real.
+              allowed_mentions: { parse: [], roles: (if $test or $role == "" then [] else [$role] end) }
+            }')
+
+          curl -fsS -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
+          echo "Announced $RELEASE_NAME to Discord"

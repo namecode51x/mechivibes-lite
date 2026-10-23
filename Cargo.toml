@@ -1,0 +1,173 @@
+[package]
+name = "mechvibes-dx"
+version = "0.8.5"
+authors = ["Hải Nguyễn <hainguyen.ts13@gmail.com>"]
+edition = "2024"
+rust-version = "1.88"
+description = "A modern mechanical keyboard sound simulator with customizable soundpacks"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+crossbeam-channel = "0.5"
+dioxus = { version = "0.7.10", features = ["router"] }
+uuid = { version = "1", features = ["v4"] }
+env_logger = "0.11.6"
+futures-timer = "3.0.3"
+lucide-dioxus = { version = "2.45.0", features = ["all-icons"] }
+once_cell = "1.21.3"
+open = "5.3.0"
+rand = "0.9.0"
+rdev = { version = "0.5.3", features = ["unstable_grab"] }
+# Use rfd from dioxus-desktop (0.15.4) with tokio instead of async-std
+rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "tokio"] }
+rodio = "0.20.1"
+cpal = "0.15"
+hound = "3.5"
+rubato = "0.15"
+# Only the codecs soundpacks actually ship in. `isomp4`/`aac` were listed for
+# parity with rodio but nothing in the tree feeds an .m4a to symphonia, and
+# they are the two most expensive codecs to compile.
+symphonia = { version = "0.5", features = [
+  "mp3",
+  "wav",
+  "ogg",
+] }
+image = "0.24"
+serde = "1.0.218"
+serde_json = "1.0.140"
+strum = { version = "0.26", features = ["derive"] }
+tray-icon = "0.14"
+# Trimmed from `full`: the app itself only touches `sync` (Notify),
+# `time` (interval/timeout) and `spawn` on the runtime dioxus-desktop owns.
+# `full` was pulling in io-util, net, signal and process for no reason.
+tokio = { version = "1.0", features = [
+  "rt-multi-thread",
+  "macros",
+  "sync",
+  "time",
+] }
+reqwest = { version = "0.12", features = ["json", "blocking"] }
+semver = "1.0"
+# zip is only ever *read* here (soundpack + update archives), and every pack in
+# the wild is a plain DEFLATE zip, so the default feature set was compiling
+# bzip2, lzma, ppmd, zstd, aes-crypto and the time machinery for nothing.
+zip = { version = "2.2.0", default-features = false, features = ["deflate"] }
+device_query = "4.0.1"
+directories = "6.0.0"
+sha2 = "0.11.0"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+evdev = "0.13"
+libc = "0.2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+macos-accessibility-client = "0.0.1"
+# Login-item registration via SMAppService (src/utils/auto_startup.rs).
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["NSError", "NSString"] }
+# The block `NSColor` calls to ask for a colour per light/dark appearance
+# (src/libs/permissions.rs). Already in the dependency tree via dioxus.
+block2 = "0.6"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+winapi = { version = "0.3", features = [
+  "wincon",
+  "winuser",
+  "hidusage",
+  "hidpi",
+  "setupapi",
+  "devguid",
+  "cfgmgr32",
+  "winreg",
+  "libloaderapi",
+  "errhandlingapi",
+  "synchapi",
+  "handleapi",
+  "winnls",
+  "processenv",
+  "winbase",
+] }
+
+
+[build-dependencies]
+# build.rs only needs std + winresource; chrono/serde_json used to live here
+# and were never referenced (cargo::unused_dependencies).
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
+
+[features]
+default = ["dioxus/desktop", "auto-update"]
+desktop = ["dioxus/desktop"]
+auto-update = []
+
+[profile.dev]
+# Optimize audio performance in dev builds while keeping debug symbols
+opt-level = 2
+debug = true
+
+# Shipping profile, tuned for a tiny idle footprint and a small binary:
+# - `lto = "thin"` + `codegen-units = 1` let the linker inline across crates,
+#   which is where most of the win comes from (fewer, tighter functions).
+# - `panic = "abort"` drops the unwind tables (~10-15% of text) - nothing in
+#   this codebase catches a panic (`catch_unwind` appears nowhere), so there is
+#   no unwinding to pay for.
+# - `strip = "debuginfo"` keeps symbols for crash reports without shipping
+#   DWARF.
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = "debuginfo"
+debug-assertions = false
+overflow-checks = false
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
+
+# DEB package configuration for Ubuntu/Debian
+[package.metadata.deb]
+maintainer = "Hải Nguyễn <hainguyen.ts13@gmail.com>"
+copyright = "2025, Hải Nguyễn <hainguyen.ts13@gmail.com>"
+extended-description = """\
+A modern mechanical keyboard sound simulator for Linux.
+Plays realistic keyboard sounds as you type with customizable soundpacks."""
+depends = "$auto, libasound2, libevdev2, libxdo3"
+section = "sound"
+priority = "optional"
+# `usr/lib/mechvibes-dx/assets` is not a free choice. dioxus-asset-resolver's
+# Linux branch (0.7.10 native.rs::get_asset_root) computes
+# `current_exe()/../../lib` - which is `/usr/lib` for a binary at
+# `/usr/bin/mechvibes-dx` - then scans it for the first subdirectory containing
+# an `assets/` folder. DIOXUS_PRODUCT_NAME is not baked into a plain
+# `cargo build --release`, so that scan is the path that actually runs. Put the
+# fonts anywhere else and every `asset!()` font silently falls back to a system
+# font. The AppImage places them at the same relative location for the same
+# reason, so one binary serves both packages.
+assets = [
+  ["target/release/mechvibes-dx", "usr/bin/", "755"],
+  ["assets/**/*", "usr/lib/mechvibes-dx/assets/", "644"],
+  ["assets/icon.png", "usr/share/icons/hicolor/512x512/apps/mechvibes-dx.png", "644"],
+  ["mechvibes-dx.desktop", "usr/share/applications/", "644"],
+  ["README.md", "usr/share/doc/mechvibes-dx/", "644"],
+  ["soundpacks/**/*", "usr/share/mechvibes-dx/soundpacks/", "644"],
+]
+
+# Local patch: wraps rdev's TIS* API calls in dispatch::Queue::main().exec_sync()
+# to fix EXC_BREAKPOINT crash on macOS Sequoia+ (HIToolbox requires main queue).
+# Remove this once rdev publishes a release with the upstream fix.
+[patch.crates-io]
+rdev = { path = "patches/rdev" }

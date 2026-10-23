@@ -1,0 +1,1004 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+ * MechVibes Super Lite — design system
+ *
+ * INSTRUMENT PANEL aesthetic: matte charcoal housing, bone silkscreen type,
+ * a single signal-orange accent, hairline borders, square controls, hard 1px
+ * offset shadows and monospace structural labels numbered 01/02/03. No glass,
+ * no gradients, no glow - and nothing that costs paint while idle: no blur
+ * over large areas, no animation that runs on its own, no webfonts.
+ *
+ * Rules in this file are deliberately written *outside* any `@layer`. Both
+ * Tailwind's utilities and daisyUI's component CSS live in layers, so an
+ * unlayered rule here wins over them without `!important` - which is how the
+ * shell restyles daisyUI components (the dock, the collapse, the table)
+ * instead of fighting them with `!important` everywhere.
+ *
+ * daisyUI 5 reads only `--color-*` variables; the daisyUI 4 names (`--bc`,
+ * `--p-500`, `--b1-100`) do not exist in this version.
+ * ------------------------------------------------------------------------- */
+
+@plugin "daisyui" {
+  themes: light, dark, cupcake, bumblebee, emerald, corporate, synthwave,
+    retro, cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel,
+    fantasy, wireframe, black, luxury, dracula, cmyk, autumn, business, acid,
+    lemonade, night, coffee, winter, dim, nord, sunset, abyss, silk,
+    caramellatte;
+}
+
+/* The house theme. Registered through daisyUI's own custom-theme plugin so it
+ * emits a complete daisyUI 5 palette (and claims `:root`, which is what paints
+ * html/body before any `data-theme` element exists). Listing `superlite` in the
+ * `themes:` option above would do nothing - that list only resolves built-ins. */
+@plugin "daisyui/theme" {
+  name: "superlite";
+  default: true;
+  color-scheme: dark;
+
+  /* Surfaces — matte charcoal "housing": base-100 is the panel face (page),
+     base-200 a recessed well, base-300 the deepest etch. Neutral-cool, no
+     chroma to speak of, so the orange reads as the only colour on the panel. */
+  --color-base-100: oklch(16.5% 0.01 270);
+  --color-base-200: oklch(13% 0.01 270);
+  --color-base-300: oklch(10.5% 0.01 270);
+  --color-base-content: oklch(93% 0.014 95);
+
+  /* Primary — signal orange, the one accent (active states, fader fill,
+     section indices, the lit dock segment). Ink on it is near-black. */
+  --color-primary: oklch(69% 0.175 41);
+  --color-primary-content: oklch(15% 0.02 45);
+
+  /* Secondary — cold steel blue, supporting chrome only. */
+  --color-secondary: oklch(62% 0.04 235);
+  --color-secondary-content: oklch(97% 0.006 240);
+
+  /* Accent — LED amber, used sparingly for highlights. */
+  --color-accent: oklch(85% 0.135 90);
+  --color-accent-content: oklch(20% 0.04 90);
+
+  --color-neutral: oklch(23% 0.012 270);
+  --color-neutral-content: oklch(96% 0.006 95);
+
+  --color-info: oklch(74% 0.11 220);
+  --color-info-content: oklch(16% 0.03 220);
+  --color-success: oklch(74% 0.15 155);
+  --color-success-content: oklch(15% 0.04 155);
+  --color-warning: oklch(84% 0.14 85);
+  --color-warning-content: oklch(22% 0.05 85);
+  --color-error: oklch(63% 0.19 22);
+  --color-error-content: oklch(97% 0.01 20);
+
+  /* Shape — square. 2px on controls, 3px on plates: everything reads milled
+     rather than moulded, and daisyUI derives every radius from these three. */
+  --radius-selector: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-box: 0.1875rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* The house theme in its other finish: a white instrument with black
+ * markings - paper and ink, where `superlite` is the anodised dark panel.
+ * Same hue axes and the same shape tokens as `superlite`, so the two read
+ * as one instrument in two finishes rather than as two designs. Registered
+ * through the plugin like every other daisyUI 5 theme in this file. */
+@plugin "daisyui/theme" {
+  name: "papel";
+  color-scheme: light;
+
+  /* Surfaces — paper. base-100 is the sheet, base-200 a recessed well,
+     base-300 the deepest etch. Warm-white rather than blue-white, so the
+     black reads as printed ink instead of as a light-mode dark theme. */
+  --color-base-100: oklch(97.5% 0.005 95);
+  --color-base-200: oklch(94.5% 0.006 95);
+  --color-base-300: oklch(89% 0.008 95);
+  --color-base-content: oklch(15.5% 0.008 270);
+
+  /* Primary — solid ink, the one accent (active states, fader fill,
+     section indices, the lit dock segment). Content on it is paper. */
+  --color-primary: oklch(18.5% 0.008 270);
+  --color-primary-content: oklch(97.5% 0.005 95);
+
+  /* Secondary — graphite, supporting chrome only. */
+  --color-secondary: oklch(60% 0.012 270);
+  --color-secondary-content: oklch(98% 0.004 95);
+
+  /* Accent — etched pencil grey, the LED's place in the monochrome. */
+  --color-accent: oklch(45% 0.011 270);
+  --color-accent-content: oklch(98% 0.004 95);
+
+  /* Neutral — the black plate (menus, tooltips, anything that sits proud
+     of the sheet). */
+  --color-neutral: oklch(20% 0.008 270);
+  --color-neutral-content: oklch(97.5% 0.005 95);
+
+  /* Status — muted printed inks. They stay chromatic on purpose: a success
+     and an error must never look alike, and on this theme they are the
+     only colour the panel ever shows. */
+  --color-info: oklch(52% 0.06 240);
+  --color-info-content: oklch(98% 0.005 240);
+  --color-success: oklch(52% 0.09 150);
+  --color-success-content: oklch(98% 0.005 150);
+  --color-warning: oklch(76% 0.12 85);
+  --color-warning-content: oklch(24% 0.05 85);
+  --color-error: oklch(50% 0.16 25);
+  --color-error-content: oklch(97% 0.01 25);
+
+  /* Shape — identical to the house theme on purpose. */
+  --radius-selector: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-box: 0.1875rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * App tokens.
+ *
+ * Declared on `:root, [data-theme]` rather than `:root` alone: custom
+ * properties are resolved where they are *declared*, so a token that mixes in
+ * `var(--color-*)` has to be re-declared on the element carrying `data-theme`
+ * to see that theme's colours instead of the root theme's.
+ * ------------------------------------------------------------------------- */
+
+:root,
+[data-theme] {
+  /* System font stack: zero font downloads, zero FOUT, native hinting.
+     Structural type (labels, numbers, titles, IDs) switches to --mv-mono. */
+  --mv-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable",
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mv-mono: ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas,
+    "Liberation Mono", monospace;
+
+  /* Motion scale — short, so nothing ever feels sticky. */
+  --mv-t-fast: 120ms;
+  --mv-t-med: 180ms;
+  --mv-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Elevation: hairlines plus *hard* offset shadows (no blur kernels - a
+     blurred shadow over a window this size is real per-frame paint work the
+     frosted-glass version used to pay for). */
+  --mv-line: color-mix(
+    in oklab,
+    var(--color-base-content, oklch(0.9 0 0)) 13%,
+    transparent
+  );
+  --mv-line-strong: color-mix(
+    in oklab,
+    var(--color-base-content, oklch(0.9 0 0)) 22%,
+    transparent
+  );
+  --mv-sheen: color-mix(
+    in oklab,
+    var(--color-base-content, oklch(0.9 0 0)) 7%,
+    transparent
+  );
+  --mv-hard: 2px 2px 0 0 rgb(0 0 0 / 0.45);
+  --mv-hard-lg: 4px 4px 0 0 rgb(0 0 0 / 0.5);
+}
+
+/* ---------------------------------------------------------------------------
+ * Base elements
+ * ------------------------------------------------------------------------- */
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  /* The root theme paints the true backdrop; `superlite` is `:root` by
+     default, so this is charcoal on a fresh install. */
+  background-color: var(--color-base-100, oklch(16.5% 0.01 270));
+  color: var(--color-base-content, oklch(93% 0.014 95));
+  font-family: var(--mv-font);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * Base layer.
+ *
+ * These live in `@layer base` on purpose: layer order beats specificity, so an
+ * unlayered `button { background: none }` would beat `.btn`'s background (and
+ * `.toggle`'s, and `.checkbox`'s) and blank every control out. Anything that
+ * deliberately overrides a component stays *outside* the layer - see the dock
+ * and collapse sections below.
+ * ------------------------------------------------------------------------- */
+
+@layer base {
+  p,
+  span,
+  li,
+  a,
+  div,
+  button,
+  label,
+  input,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  section,
+  header,
+  footer,
+  nav {
+    user-select: none;
+    cursor: default;
+  }
+
+  a,
+  button,
+  label,
+  summary,
+  .mv-label,
+  [data-role="clickable"] {
+    cursor: pointer;
+  }
+
+  /* Text entry stays selectable despite the blanket rule above; the
+     checkbox/range exclusions keep their native cursors. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  [contenteditable="true"] {
+    user-select: text;
+    cursor: text;
+  }
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Crisp instrument focus: a hard 1px outline, never a glow. */
+:focus-visible {
+  outline: 1px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------------------
+ * The window backdrop: a flat panel face with an engraved dot grid (the
+ * blueprint/PCB texture of an instrument's silkscreen), painted once and never
+ * repainted while idle - two radial gradients, no blur. Falls back to a flat
+ * base when the user sets a custom background (the inline `background:`
+ * shorthand resets background-image, which is exactly the intended precedence).
+ * ------------------------------------------------------------------------- */
+
+.app-bg {
+  background-color: var(--color-base-100);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in oklab, var(--color-base-content) 6%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Scrollbars — square, hairline, quiet until touched.
+ * ------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mv-line-strong);
+  border-radius: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(
+    in oklab,
+    var(--color-primary) 70%,
+    transparent
+  );
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+ * Dock — a flush, full-width segmented control strip welded to the bottom
+ * edge: five equal cells split by hairlines, the live one filled solid signal
+ * orange with ink text (a lit segment, like a channel button on a mixer).
+ * No pill, no radius, no blur - see `dock.rs` for the numbered labels.
+ * ------------------------------------------------------------------------- */
+
+.dock {
+  position: fixed;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  height: 3.5rem;
+  padding: 0;
+  gap: 0;
+  flex-direction: row;
+  justify-content: stretch;
+  align-items: stretch;
+  border: 0;
+  border-top: 1px solid var(--mv-line-strong);
+  border-radius: 0;
+  background-color: var(--color-base-200);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--color-base-content);
+  box-shadow: 0 -1px 0 0 rgb(0 0 0 / 0.55);
+}
+
+/* daisyUI's active underline and per-item radius/margins; the segmented strip
+ * below replaces all of it. */
+.dock > *::after {
+  display: none;
+}
+
+.dock > * {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  flex-shrink: 1;
+  justify-content: center;
+  align-items: center;
+  gap: 0.1875rem;
+  max-width: none;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 0.25rem;
+  border-radius: 0;
+  border-right: 1px solid var(--mv-line);
+  background-color: transparent;
+  color: color-mix(in oklab, var(--color-base-content) 52%, transparent);
+  opacity: 1;
+  overflow: hidden;
+  transition:
+    background-color var(--mv-t-fast) var(--mv-ease),
+    color var(--mv-t-fast) var(--mv-ease);
+}
+
+.dock > *:last-child {
+  border-right: 0;
+}
+
+@media (hover: hover) {
+  .dock > *:hover {
+    opacity: 1;
+    background-color: var(--mv-sheen);
+    color: var(--color-base-content);
+  }
+
+  .dock > .dock-active:hover {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+}
+
+.dock > .dock-active {
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+  box-shadow: inset 0 1px 0 0
+    color-mix(in oklab, var(--color-primary-content) 25%, transparent);
+}
+
+.dock .dock-label {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--mv-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The segment index: orange on the dark cells, dimmed ink on the lit one. */
+.dock-num {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.dock > .dock-active .dock-num {
+  color: inherit;
+  opacity: 0.65;
+}
+
+/* ---------------------------------------------------------------------------
+ * Collapse — cosmetics only.
+ *
+ * daisyUI 5 animates these with a CSS grid (`grid-template-rows: 0fr -> 1fr`)
+ * and drives visibility from the radio input. Any rule here that touches
+ * display, grid placement or visibility would break the accordion, so this
+ * section only ever paints the box: a square module plate with a hairline
+ * frame that lights signal-orange along its left edge while open.
+ * ------------------------------------------------------------------------- */
+
+.collapse {
+  background-color: var(--color-base-200);
+  border: 1px solid var(--mv-line);
+  border-radius: var(--radius-box);
+  box-shadow: var(--mv-hard);
+  transition:
+    border-color var(--mv-t-fast) var(--mv-ease),
+    background-color var(--mv-t-fast) var(--mv-ease);
+}
+
+.collapse:hover {
+  border-color: var(--mv-line-strong);
+}
+
+.collapse:has(> input:checked) {
+  background-color: var(--color-base-200);
+  border-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
+  box-shadow:
+    var(--mv-hard),
+    inset 3px 0 0 0 var(--color-primary);
+}
+
+.collapse-title {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-family: var(--mv-mono);
+  font-weight: 700;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-block: 0.75rem;
+  padding-inline: 0.875rem;
+}
+
+/* The chevron: recolour in place (orange) and re-centre for the shorter
+   mono title, without touching the transform contract daisyUI animates. */
+.collapse-arrow > .collapse-title::after {
+  top: 1.4rem;
+  inset-inline-end: 1rem;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.collapse-content {
+  font-size: 0.8125rem;
+  padding-inline: 0.875rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Form controls — square wells with hairline frames and a hard focus ring.
+ * ------------------------------------------------------------------------- */
+
+.input,
+.select,
+.textarea {
+  border: 1px solid var(--mv-line-strong);
+  background-color: var(--color-base-300);
+  color: var(--color-base-content);
+  border-radius: var(--radius-field);
+  transition: border-color var(--mv-t-fast) var(--mv-ease);
+}
+
+.input:hover,
+.select:hover,
+.textarea:hover {
+  border-color: color-mix(
+    in oklab,
+    var(--color-primary) 45%,
+    transparent
+  );
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--color-base-300);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: color-mix(in oklab, var(--color-base-content) 38%, transparent);
+}
+
+/* Faders: daisyUI 5 paints the fill from `currentColor` and the cap from
+   `--range-thumb`, so recolouring here is the whole mechanism - orange fill,
+   bone cap with an orange edge (`.range-p` border stays currentColor). */
+.range {
+  --range-p: 0rem;
+  height: 1.375rem;
+}
+
+.range-primary {
+  color: var(--color-primary);
+  --range-thumb: oklch(94% 0.014 95);
+}
+
+.range-warning {
+  color: var(--color-warning);
+  --range-thumb: oklch(94% 0.014 95);
+}
+
+/* ---------------------------------------------------------------------------
+ * Buttons — square keys. Soft/outline variants get a hairline frame; the
+ * primary gets ink-on-orange plus a hard offset shadow so it reads as a
+ * physical key sitting proud of the panel.
+ * ------------------------------------------------------------------------- */
+
+.btn {
+  border-radius: var(--radius-field);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.btn-soft {
+  border: 1px solid var(--mv-line);
+}
+
+.btn-outline {
+  border: 1px solid var(--mv-line-strong);
+}
+
+.btn-primary {
+  border: 1px solid oklch(48% 0.13 41);
+  background-color: var(--color-primary);
+  color: var(--color-primary-content);
+  box-shadow: var(--mv-hard);
+}
+
+.btn-primary:hover {
+  background-color: oklch(73% 0.175 41);
+}
+
+/* The soundpack "cartridge" trigger: a proud plate that presses into the
+   panel on click (see .mv-cart in soundpack_selector.rs). */
+.mv-cart {
+  border: 1px solid var(--mv-line-strong);
+  background-color: var(--color-base-200);
+  color: var(--color-base-content);
+  box-shadow: var(--mv-hard);
+  transition: all var(--mv-t-fast) var(--mv-ease);
+}
+
+@media (hover: hover) {
+  .mv-cart:hover:not(:disabled) {
+    border-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 0 rgb(0 0 0 / 0.5);
+  }
+}
+
+.mv-cart:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 0 rgb(0 0 0 / 0.5);
+}
+
+.mv-cart:disabled {
+  opacity: 0.6;
+}
+
+/* Open state of the cartridge trigger: the slot is lit along its bottom
+   edge, the plate stays where it is. */
+.mv-cart.mv-cart-on {
+  border-color: var(--color-primary);
+  box-shadow:
+    var(--mv-hard),
+    inset 0 -3px 0 0 var(--color-primary);
+}
+
+/* ---------------------------------------------------------------------------
+ * Tailwind's own radius scale doesn't read the theme's `--radius-*` vars, so
+ * flatten it here (unlayered beats the utility layer): rounded-lg and friends
+ * become the same 2-3px mill edge as everything else. Circles (`rounded-full`)
+ * are left alone - LEDs and radio dots are round on real panels too.
+ * ------------------------------------------------------------------------- */
+
+.rounded {
+  border-radius: 3px;
+}
+
+.rounded-sm {
+  border-radius: 2px;
+}
+
+.rounded-md,
+.rounded-lg {
+  border-radius: 3px;
+}
+
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Floating surfaces — popovers and dialogs get hard offset shadows instead
+ * of blur-drop shadows, like a module lifted off the panel.
+ * ------------------------------------------------------------------------- */
+
+.modal-box,
+.dropdown-content {
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--radius-box);
+  background-color: var(--color-base-200);
+  box-shadow: var(--mv-hard-lg);
+}
+
+.modal-box {
+  border-radius: var(--radius-box);
+}
+
+/* ---------------------------------------------------------------------------
+ * Tabs / table / divider / badge / tooltip — structural chrome in mono.
+ * ------------------------------------------------------------------------- */
+
+.tab {
+  font-family: var(--mv-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+  border-radius: var(--radius-field) var(--radius-field) 0 0;
+  transition:
+    color var(--mv-t-fast) var(--mv-ease),
+    border-color var(--mv-t-fast) var(--mv-ease);
+}
+
+.tab:hover {
+  color: var(--color-base-content);
+}
+
+.tab:has(:checked),
+.tab[aria-selected="true"],
+.tab-active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: inset 0 2px 0 0 var(--color-primary);
+}
+
+.table {
+  font-size: 0.75rem;
+}
+
+.table :where(th) {
+  font-family: var(--mv-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+  border-bottom: 1px solid var(--mv-line-strong);
+  background-color: transparent;
+}
+
+.table :where(td) {
+  border-bottom: 1px solid var(--mv-line);
+}
+
+.table :where(tbody tr:hover) {
+  background-color: color-mix(
+    in oklab,
+    var(--color-primary) 7%,
+    transparent
+  );
+}
+
+/* A hairline rule, not daisyUI's 2px bar. */
+.divider {
+  --divider-color: var(--mv-line);
+}
+
+.divider::before,
+.divider::after {
+  height: 1px;
+  border: none;
+  background-color: var(--divider-color);
+}
+
+.badge {
+  font-family: var(--mv-mono);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.tooltip::after {
+  font-family: var(--mv-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  border: 1px solid rgb(0 0 0 / 0.35);
+}
+
+.alert {
+  border: 1px solid var(--mv-line);
+  border-radius: var(--radius-box);
+}
+
+/* ---------------------------------------------------------------------------
+ * Small shared pieces.
+ * ------------------------------------------------------------------------- */
+
+/* Silkscreen label: mono, small-caps feel, quiet bone. */
+.mv-label {
+  font-family: var(--mv-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+}
+
+/* Section index: the orange 01/02/03 in front of a label. Declared after
+   .mv-label so its colour wins where the two are nested. */
+.mv-idx {
+  font-family: var(--mv-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+}
+
+/* Larger index that prefixes a page title. */
+.mv-idx-lg {
+  font-family: var(--mv-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* Page title: mono, uppercase, wide-tracked silkscreen on the panel face. */
+.mv-h1 {
+  font-family: var(--mv-mono);
+  font-size: 1.125rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-base-content);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mv-sub {
+  font-size: 0.75rem;
+  line-height: 1.05rem;
+  letter-spacing: 0.01em;
+  color: color-mix(in oklab, var(--color-base-content) 52%, transparent);
+  margin-top: 0.25rem;
+}
+
+/* Dotted leader running from the title to the right edge, like the printed
+   spacing between a label and its value on a panel. */
+.mv-rule {
+  flex: 1 1 auto;
+  min-width: 1.5rem;
+  align-self: center;
+  margin-left: 0.75rem;
+  margin-top: 0.25rem;
+  border-bottom: 1px dashed
+    color-mix(in oklab, var(--color-base-content) 22%, transparent);
+}
+
+/* Page-header icon tile: a square function key, orange glyph, hard shadow. */
+.mv-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  background-color: var(--color-base-200);
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--radius-box);
+  color: var(--color-primary);
+  box-shadow: var(--mv-hard);
+}
+
+/* Sub-head inside a plate (mood panel etc.). */
+.mv-h3 {
+  font-family: var(--mv-mono);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-base-content);
+}
+
+/* A plate: recessed housing block with a frame and a hard shadow. */
+.mv-plate {
+  background-color: var(--color-base-200);
+  border: 1px solid var(--mv-line-strong);
+  border-radius: var(--radius-box);
+  box-shadow: var(--mv-hard);
+}
+
+/* Channel strip rows (mood): transparent while idle, lit - bone face plus a
+   solid orange rail down the left edge - while the sound plays. */
+.mv-strip {
+  background-color: transparent;
+  border: 1px solid var(--mv-line);
+  border-radius: var(--radius-box);
+  transition: border-color var(--mv-t-fast) var(--mv-ease);
+}
+
+.mv-strip:hover {
+  border-color: var(--mv-line-strong);
+}
+
+.mv-strip.mv-on {
+  background-color: var(--color-base-100);
+  border-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--color-primary);
+}
+
+/* Mono metadata line: authors, device IDs, paths. */
+.mv-meta {
+  font-family: var(--mv-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mv-mono {
+  font-family: var(--mv-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+}
+
+/* Numeric readout next to a fader: tabular so digits don't dance. */
+.mv-readout {
+  font-family: var(--mv-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+  font-family: var(--mv-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+  background-color: transparent;
+  border: 1px solid var(--mv-line-strong);
+}
+
+/* Static panel LED (titlebar): an unlit socket or a lit orange dot. No glow,
+   no animation - it costs one 6px circle to paint. */
+.mv-led {
+  display: inline-block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 999px;
+  background-color: color-mix(
+    in oklab,
+    var(--color-base-content) 18%,
+    transparent
+  );
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.55);
+  flex-shrink: 0;
+}
+
+.mv-led-on {
+  background-color: var(--color-primary);
+}
+
+/* Titlebar: flat hairline strip, mono silkscreen wordmark. */
+.mv-title {
+  font-family: var(--mv-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-base-content);
+}
+
+/* Window controls: square keys in a hairline-divided cluster. */
+.mv-winbtn {
+  border-radius: 0;
+  border: 1px solid transparent;
+  padding: 0.3125rem;
+  transition:
+    background-color var(--mv-t-fast) var(--mv-ease),
+    border-color var(--mv-t-fast) var(--mv-ease),
+    color var(--mv-t-fast) var(--mv-ease);
+}
+
+.mv-winbtn:hover {
+  border-color: var(--mv-line-strong);
+  background-color: var(--mv-sheen);
+}
+
+.mv-winbtn-close:hover {
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+  color: var(--color-error-content);
+}
+
+/* Type sits a touch tighter than Tailwind's default scale. */
+.text-sm {
+  font-size: 0.8125rem;
+  line-height: 1.15rem;
+  letter-spacing: -0.006em;
+}
+
+/* The wordmark keycap, from the original stylesheet (kept verbatim apart from
+ * `box-shadow: none`, which upstream wrote as the invalid `box-shadow: 0`):
+ * `logo.rs` toggles `.logo-pressed` while a key is held, and the 5px margins
+ * drop the cap 5px while the negative bottom margin keeps the layout box in
+ * place. Margins rather than a transform on purpose - a transform would make
+ * the logo its own stacking context (the same trap the Linux CSS notes warn
+ * about for blanket `translateZ`), and the inline style drops the 5px solid
+ * shadow at the same moment, so the cap reads as bottoming out. */
+.logo-pressed {
+  margin-top: 5px;
+  margin-bottom: -5px;
+  box-shadow: none;
+}
+
+/* `.logo-muted` is a marker class only: `logo.rs` decides whether to dim by
+ * appending `opacity-50` itself (`dimmed_when_muted` in the config), so
+ * styling opacity here would dim the wordmark for users who asked it not to
+ * be. */
+
+/* ---------------------------------------------------------------------------
+ * Motion — short, ease-out, and off entirely when the user asks for it.
+ * ------------------------------------------------------------------------- */
+
+@keyframes mv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mv-rise {
+  animation: mv-rise 220ms var(--mv-ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

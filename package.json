@@ -1,0 +1,16 @@
+{
+    "name": "mechvibes-super-lite",
+    "private": true,
+    "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39",
+    "scripts": {
+        "build:css": "tailwindcss -i style.css -o assets/style.css --minify",
+        "dev:css": "tailwindcss -i style.css -o assets/style.css --watch"
+    },
+    "devDependencies": {
+        "@tailwindcss/cli": "^4.3.3",
+        "@tailwindcss/postcss": "^4.1.7",
+        "cssnano": "^7.0.7",
+        "daisyui": "^5.0.37",
+        "tailwindcss": "^4.1.7"
+    }
+}
